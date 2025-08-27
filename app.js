@@ -20,14 +20,21 @@ const port = 3000;
 //   allowedHeaders: ['Content-Type', 'Authorization'],
 // }));
 
+// app.use(cors({
+//   origin: [
+//     "http://localhost:5173",   // dev
+//     "https://obdsmart.org"     // prod
+//   ],
+//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+//   allowedHeaders: ["Content-Type", "Authorization"],
+//   credentials: true   // allow cookies/sessions
+// }));
+
+
 app.use(cors({
-  origin: [
-    "http://localhost:5173",   // dev
-    "https://obdsmart.org"     // prod
-  ],
+  origin: "*",  // allow all
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true   // allow cookies/sessions
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
 
@@ -54,7 +61,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Use main router
-app.use('/', apiV1);
+app.use('/api', apiV1);
 
 // Health check endpoint
 app.get("/app/health", (req, res) => {

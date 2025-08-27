@@ -20,20 +20,20 @@ const fs = require('fs');
 // -------------------------------
 // Router for file uploads (FaultUplodes exports a router)
 // -------------------------------
-router.use('/api', FaultUplodes);
+router.use('', FaultUplodes);
 
 // -------------------------------
 // Function Handlers (export functions directly)
 // -------------------------------
-router.get('/api/users', getUsers);
-router.get('/api/ScanDetail', ScanDetail);
-router.get('/api/SpecialFunctions', SpecialFunctions);
-router.get('/api/ActuationsDetail', ActuationsDetail);
-router.get('/api/getCoverage', getCoverage);
-router.get('/api/ActuationCommands', ActuationCommands);
-router.get('/api/CustomCommands', CustomCommands);
-router.get('/api/OdometerAPI', OdometerAPI);
-router.get('/api/SPFCommands', SPFCommands);
+router.get('/users', getUsers);
+router.get('/ScanDetail', ScanDetail);
+router.get('/SpecialFunctions', SpecialFunctions);
+router.get('/ActuationsDetail', ActuationsDetail);
+router.get('/getCoverage', getCoverage);
+router.get('/ActuationCommands', ActuationCommands);
+router.get('/CustomCommands', CustomCommands);
+router.get('/OdometerAPI', OdometerAPI);
+router.get('/SPFCommands', SPFCommands);
 
 // Test route
 router.get('/test', (req, res) => {
