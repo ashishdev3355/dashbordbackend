@@ -1,0 +1,9 @@
+/node_modules
+.env
+temp.js
+temp3.js
+temp2.js
+temp4.js
+google-services.json
+firebaseServiceAccountKey.json
+firebase.js
