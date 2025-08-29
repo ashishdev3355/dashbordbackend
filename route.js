@@ -13,6 +13,7 @@ const ActuationCommands = require("./Dashboard/ActuationCommands.js");
 const CustomCommands = require("./Dashboard/CustomCommands.js");
 const OdometerAPI = require("./Dashboard/OdometerAPI.js");
 const SPFCommands = require("./Dashboard/SPFCommands.js");
+const FetchMakeList = require("./Dashboard/FetchMakeList.js");
 
 const path = require('path');
 const fs = require('fs');
@@ -20,7 +21,7 @@ const fs = require('fs');
 // -------------------------------
 // Router for file uploads (FaultUplodes exports a router)
 // -------------------------------
-router.use('', FaultUplodes);
+router.use('/FaultUplodes', FaultUplodes);
 
 // -------------------------------
 // Function Handlers (export functions directly)
@@ -34,6 +35,27 @@ router.get('/ActuationCommands', ActuationCommands);
 router.get('/CustomCommands', CustomCommands);
 router.get('/OdometerAPI', OdometerAPI);
 router.get('/SPFCommands', SPFCommands);
+router.get('/FetchMakeList', FetchMakeList);
+
+
+
+
+
+
+
+// const { ImportExcel, upload } = require("./Dashboard/FaultUplodes.js");
+
+
+
+// router.post("/FaultUplodes", upload.single("file"), ImportExcel);
+
+
+
+
+
+
+
+
 
 // Test route
 router.get('/test', (req, res) => {

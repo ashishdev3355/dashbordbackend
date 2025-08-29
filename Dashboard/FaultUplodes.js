@@ -346,6 +346,84 @@ router.post('/', upload.single('file'), async (req, res) => {
   }
 });
 
+// --------------------------------------------------
+// Route to clear all data (useful for testing)
+// --------------------------------------------------
+router.delete('/clear-data', async (req, res) => {
+  let dbClient;
+  
+  try {
+    dbClient = await client.pool.connect();
+    await dbClient.query('BEGIN');
+    
+    await dbClient.query('DELETE FROM my_fault_code_causes');
+    await dbClient.query('DELETE FROM dtc_codes');
+    
+    await dbClient.query('COMMIT');
+    
+    res.json({
+      success: true,
+      message: 'All data cleared successfully'
+    });
+  } catch (err) {
+    if (dbClient) {
+      await dbClient.query('ROLLBACK');
+    }
+    
+    console.error('Clear data error:', err);
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  } finally {
+    if (dbClient) {
+      dbClient.release();
+    }
+  }
+});
 
+// --------------------------------------------------
+// Additional route to check table data (unchanged)
+// --------------------------------------------------
+router.get('/check-dtc-codes', async (req, res) => {
+  try {
+    const result = await client.query('SELECT COUNT(*) as count FROM dtc_codes');
+    const sampleData = await client.query('SELECT * FROM dtc_codes ORDER BY id DESC LIMIT 5');
+    
+    res.json({
+      success: true,
+      totalRows: result ? parseInt(result.rows[0].count) : 0,
+      sampleData: sampleData ? sampleData.rows : []
+    });
+  } catch (err) {
+    console.error('Check dtc_codes error:', err);
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
+// --------------------------------------------------
+// Test database connection route (unchanged)
+// --------------------------------------------------
+router.get('/test-db', async (req, res) => {
+  try {
+    const result = await client.query('SELECT NOW() as current_time');
+    
+    res.json({
+      success: true,
+      message: 'Database connection successful',
+      serverTime: result ? result.rows[0].current_time : 'No result'
+    });
+  } catch (err) {
+    console.error('Database test error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Database connection failed',
+      error: err.message
+    });
+  }
+});
 
 module.exports = router;

@@ -13,23 +13,6 @@ const apiV1 = require('./route.js');
 const app = express();
 const port = 3000;
 
-// CORS Configuration - FIXED (removed problematic app.options line)
-// app.use(cors({
-//   origin: '*',
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-//   allowedHeaders: ['Content-Type', 'Authorization'],
-// }));
-
-// app.use(cors({
-//   origin: [
-//     "http://localhost:5173",   // dev
-//     "https://obdsmart.org"     // prod
-//   ],
-//   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-//   allowedHeaders: ["Content-Type", "Authorization"],
-//   credentials: true   // allow cookies/sessions
-// }));
-
 
 app.use(cors({
   origin: "*",  // allow all
@@ -38,7 +21,7 @@ app.use(cors({
 }));
 
 
-// REMOVED: app.options('*', cors()); // This was causing the path-to-regexp error
+
 
 // Setup sessions using PostgreSQL
 app.use(session({
