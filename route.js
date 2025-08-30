@@ -14,6 +14,7 @@ const CustomCommands = require("./Dashboard/CustomCommands.js");
 const OdometerAPI = require("./Dashboard/OdometerAPI.js");
 const SPFCommands = require("./Dashboard/SPFCommands.js");
 const FetchMakeList = require("./Dashboard/FetchMakeList.js");
+const ModelList = require("./Dashboard/ModelList.js");
 
 const path = require('path');
 const fs = require('fs');
@@ -36,22 +37,7 @@ router.get('/CustomCommands', CustomCommands);
 router.get('/OdometerAPI', OdometerAPI);
 router.get('/SPFCommands', SPFCommands);
 router.get('/FetchMakeList', FetchMakeList);
-
-
-
-
-
-
-
-// const { ImportExcel, upload } = require("./Dashboard/FaultUplodes.js");
-
-
-
-// router.post("/FaultUplodes", upload.single("file"), ImportExcel);
-
-
-
-
+router.get('/ModelList', ModelList);
 
 
 

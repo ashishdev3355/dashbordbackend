@@ -29,6 +29,17 @@ const SPFCommands = async (req, res) => {
 
     const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
 
+    // SELECT mac.pid, mac.command_type, mac.function_name, mac.variant_id, mac.subfunction,
+      //        mac.message, mac.loop_flag, mac.loop_num, mac.input_format,
+      //        mac.loop_pid_array, mac.input_map, mac.wait_pid,
+      //        mac.input_encoding_formula, mac.hard_coded
+      // FROM "mechanic_SPF_commands_new" mac
+      // INNER JOIN cars c ON c.model_group_id = ANY(mac.model_group_id)
+      // INNER JOIN car_companies cc ON cc.id = mac.make_id
+      // ${whereClause}
+      // ORDER BY mac.function_name ASC
+      // LIMIT $${limitIndex} OFFSET $${offsetIndex}
+
     const query = `
       SELECT mac.pid, mac.command_type, mac.function_name, mac.variant_id, mac.subfunction,
              mac.message, mac.loop_flag, mac.loop_num, mac.input_format,
@@ -38,7 +49,7 @@ const SPFCommands = async (req, res) => {
       INNER JOIN cars c ON c.model_group_id = ANY(mac.model_group_id)
       INNER JOIN car_companies cc ON cc.id = mac.make_id
       ${whereClause}
-      ORDER BY mac.function_name ASC
+      ORDER BY mac.id ASC
       LIMIT $${limitIndex} OFFSET $${offsetIndex}
     `;
 
