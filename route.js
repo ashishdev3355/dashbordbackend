@@ -15,6 +15,8 @@ const OdometerAPI = require("./Dashboard/OdometerAPI.js");
 const SPFCommands = require("./Dashboard/SPFCommands.js");
 const FetchMakeList = require("./Dashboard/FetchMakeList.js");
 const ModelList = require("./Dashboard/ModelList.js");
+const uplodeactivationcode = require("./Dashboard/UplodeActivationCode.js");
+const CommandAPI = require("./Dashboard/CommandAPI.js");
 
 const path = require('path');
 const fs = require('fs');
@@ -23,12 +25,14 @@ const fs = require('fs');
 // Router for file uploads (FaultUplodes exports a router)
 // -------------------------------
 router.use('/FaultUplodes', FaultUplodes);
+router.use('/uplodeactivationcode', uplodeactivationcode);
 
 // -------------------------------
 // Function Handlers (export functions directly)
 // -------------------------------
 router.get('/users', getUsers);
 router.get('/ScanDetail', ScanDetail);
+router.get('/CommandAPI', CommandAPI);
 router.get('/SpecialFunctions', SpecialFunctions);
 router.get('/ActuationsDetail', ActuationsDetail);
 router.get('/getCoverage', getCoverage);
