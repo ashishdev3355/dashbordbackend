@@ -187,7 +187,7 @@ router.post('/', upload.single('file'), async (req, res) => {
     // Import fault_descriptions to dtc_codes table
     const importResult1 = await importToTable(
       workbook, 
-      'fault_descriptions', 
+      'fault_descriptions', // 
       'my_fault_codes', 
       (row) => {
         console.log('Raw row data:', row);
@@ -240,7 +240,7 @@ router.post('/', upload.single('file'), async (req, res) => {
     );
     const importResult3 = await importToTable(
       workbook, 
-      'symptoms', 
+      'symptoms', //tata
       'my_fault_code_symptoms', 
       (row) => {
         console.log('Raw row data:', row);
