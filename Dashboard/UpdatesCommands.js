@@ -1,6 +1,6 @@
 const express = require('express');
 const multer = require('multer');
-const fs = require('fs');
+const fs = require('fs').promises; // Use promises version
 const path = require('path');
 const ExcelJS = require('exceljs');
 const pool = require('../client');
@@ -19,6 +19,16 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
+// Helper function to delete file safely
+const deleteFileAsync = async (filePath) => {
+  try {
+    await fs.unlink(filePath);
+    console.log(`Successfully deleted file: ${filePath}`);
+  } catch (err) {
+    console.error('Error deleting file:', err);
+  }
+};
+
 router.post('/', upload.single('file'), async (req, res) => {
   let filePath;
   try {
@@ -27,6 +37,8 @@ router.post('/', upload.single('file'), async (req, res) => {
 
     if (!sheetName) return res.status(400).json({ message: 'sheetName is required' });
     if (!filePath) return res.status(400).json({ message: 'No file uploaded' });
+
+    console.log(`Processing file: ${filePath}`);
 
     // ✅ Start transaction
     await pool.query('BEGIN');
@@ -38,6 +50,7 @@ router.post('/', upload.single('file'), async (req, res) => {
     );
     if (companyRes.rows.length === 0) {
       await pool.query('ROLLBACK');
+      await deleteFileAsync(filePath); // Delete file before returning error
       return res.status(404).json({ message: `Company "${sheetName}" not found` });
     }
     const makeId = companyRes.rows[0].id;
@@ -52,6 +65,7 @@ router.post('/', upload.single('file'), async (req, res) => {
     const worksheet = workbook.getWorksheet(sheetName);
     if (!worksheet) {
       await pool.query('ROLLBACK');
+      await deleteFileAsync(filePath); // Delete file before returning error
       return res.status(400).json({ message: `Worksheet "${sheetName}" not found in Excel file.` });
     }
 
@@ -125,13 +139,10 @@ router.post('/', upload.single('file'), async (req, res) => {
     }
 
     await pool.query('COMMIT');
+    console.log(`Transaction committed. Inserted: ${insertedCount}, Skipped: ${skippedCount}`);
 
-    // Clean up file
-    if (filePath && fs.existsSync(filePath)) {
-      fs.unlink(filePath, (err) => { 
-        if (err) console.error('Error deleting file:', err); 
-      });
-    }
+    // ✅ Delete file after successful processing
+    await deleteFileAsync(filePath);
 
     res.status(200).json({
       message: `Excel imported for company "${sheetName}"`,
@@ -142,14 +153,18 @@ router.post('/', upload.single('file'), async (req, res) => {
     });
 
   } catch (err) {
-    await pool.query('ROLLBACK');
+    // ✅ Rollback transaction on error
+    try {
+      await pool.query('ROLLBACK');
+    } catch (rollbackError) {
+      console.error('Error during rollback:', rollbackError);
+    }
+    
     console.error('Excel Import Error:', err);
     
-    // Clean up file on error
-    if (filePath && fs.existsSync(filePath)) {
-      fs.unlink(filePath, (unlinkErr) => { 
-        if (unlinkErr) console.error('Error deleting file on error:', unlinkErr); 
-      });
+    // ✅ Delete file on error using async/await
+    if (filePath) {
+      await deleteFileAsync(filePath);
     }
     
     res.status(500).json({ 
@@ -160,3 +175,6 @@ router.post('/', upload.single('file'), async (req, res) => {
 });
 
 module.exports = router;
+
+
+
