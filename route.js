@@ -17,6 +17,7 @@ const FetchMakeList = require("./Dashboard/FetchMakeList.js");
 const ModelList = require("./Dashboard/ModelList.js");
 const uplodeactivationcode = require("./Dashboard/UplodeActivationCode.js");
 const CommandAPI = require("./Dashboard/CommandAPI.js");
+const UpdatesCommands = require("./Dashboard/UpdatesCommands.js");
 
 const path = require('path');
 const fs = require('fs');
@@ -26,6 +27,7 @@ const fs = require('fs');
 // -------------------------------
 router.use('/FaultUplodes', FaultUplodes);
 router.use('/uplodeactivationcode', uplodeactivationcode);
+router.use('/UpdatesCommands', UpdatesCommands);
 
 // -------------------------------
 // Function Handlers (export functions directly)
