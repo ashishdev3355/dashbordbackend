@@ -43,7 +43,7 @@ const upload = multer({
   }
 });
 
-// Function to parse CSV files
+
 const parseCSV = (filePath) => {
   return new Promise((resolve, reject) => {
     const rows = [];
@@ -183,8 +183,8 @@ const insertDataBatch = async (rows) => {
       const { ActivationCode, Plan, Duration, Vehicle } = validatedRow;
       
       await client.query(
-        `INSERT INTO activation_codes_new (activation_code, plan, duration, vehicle) VALUES ($1, $2, $3, $4)`,
-        [ActivationCode, Plan, Duration, Vehicle]
+        `INSERT INTO activation_codes_new (activation_code, plan, duration, vehicle, redeemed) VALUES ($1, $2, $3, $4,$5)`,
+        [ActivationCode, Plan, Duration, Vehicle,false]
       );
     }
     
