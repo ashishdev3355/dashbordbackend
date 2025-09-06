@@ -74,7 +74,7 @@ const ScanDetail = async (req, res) => {
       LEFT JOIN mode_alls_new scan
         ON u.id = scan.user_id
       ${whereClause}
-      ORDER BY scan.scan_start_time DESC
+      ORDER BY scan.user_id DESC
       LIMIT $${values.length - 1} OFFSET $${values.length}
     `;
 
