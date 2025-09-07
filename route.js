@@ -18,6 +18,7 @@ const ModelList = require("./Dashboard/ModelList.js");
 const uplodeactivationcode = require("./Dashboard/UplodeActivationCode.js");
 const CommandAPI = require("./Dashboard/CommandAPI.js");
 const UpdatesCommands = require("./Dashboard/UpdatesCommands.js");
+const LiveDataCommands = require("./Dashboard/LiveDataCommands.js");
 
 const path = require('path');
 const fs = require('fs');
@@ -44,6 +45,7 @@ router.get('/OdometerAPI', OdometerAPI);
 router.get('/SPFCommands', SPFCommands);
 router.get('/FetchMakeList', FetchMakeList);
 router.get('/ModelList', ModelList);
+router.get('/LiveDataCommands', LiveDataCommands);
 
 
 
