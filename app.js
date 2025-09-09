@@ -9,9 +9,10 @@ const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
 const { pool } = require('./client.js');
 const apiV1 = require('./route.js');
+const authRoutes = require("./auth.js");
 
 const app = express();
-const port = 3000;
+const port = 5000;
 
 
 app.use(cors({
@@ -45,6 +46,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Use main router
 app.use('/api', apiV1);
+
+app.use("/api", authRoutes);
 
 // Health check endpoint
 app.get("/app/health", (req, res) => {

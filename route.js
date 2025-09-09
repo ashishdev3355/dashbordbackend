@@ -2,6 +2,7 @@
 // route.js - Complete with all your routes
 const express = require('express');
 const router = express.Router();
+const requireAuth = require("./middleware/tokenverfy.js");
 
 const getUsers = require("./Dashboard/user-detail");
 const ScanDetail = require("./Dashboard/Scan-detail");
@@ -26,26 +27,26 @@ const fs = require('fs');
 // -------------------------------
 // Router for file uploads (FaultUplodes exports a router)
 // -------------------------------
-router.use('/FaultUplodes', FaultUplodes);
-router.use('/uplodeactivationcode', uplodeactivationcode);
-router.use('/UpdatesCommands', UpdatesCommands);
+router.use('/FaultUplodes',requireAuth, FaultUplodes);
+router.use('/uplodeactivationcode',requireAuth, uplodeactivationcode);
+router.use('/UpdatesCommands',requireAuth, UpdatesCommands);
 
 // -------------------------------
 // Function Handlers (export functions directly)
 // -------------------------------
-router.get('/users', getUsers);
-router.get('/ScanDetail', ScanDetail);
-router.get('/CommandAPI', CommandAPI);
-router.get('/SpecialFunctions', SpecialFunctions);
-router.get('/ActuationsDetail', ActuationsDetail);
-router.get('/getCoverage', getCoverage);
-router.get('/ActuationCommands', ActuationCommands);
-router.get('/CustomCommands', CustomCommands);
-router.get('/OdometerAPI', OdometerAPI);
-router.get('/SPFCommands', SPFCommands);
-router.get('/FetchMakeList', FetchMakeList);
-router.get('/ModelList', ModelList);
-router.get('/LiveDataCommands', LiveDataCommands);
+router.get('/users',requireAuth, getUsers);
+router.get('/ScanDetail',requireAuth, ScanDetail);
+router.get('/CommandAPI',requireAuth, CommandAPI);
+router.get('/SpecialFunctions',requireAuth, SpecialFunctions);
+router.get('/ActuationsDetail',requireAuth, ActuationsDetail);
+router.get('/getCoverage',requireAuth, getCoverage);
+router.get('/ActuationCommands',requireAuth, ActuationCommands);
+router.get('/CustomCommands',requireAuth, CustomCommands);
+router.get('/OdometerAPI', requireAuth,OdometerAPI);
+router.get('/SPFCommands',requireAuth, SPFCommands);
+router.get('/FetchMakeList',requireAuth, FetchMakeList);
+router.get('/ModelList',requireAuth, ModelList);
+router.get('/LiveDataCommands', requireAuth,LiveDataCommands);
 
 
 
