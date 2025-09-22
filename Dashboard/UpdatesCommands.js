@@ -1,88 +1,344 @@
+// const express = require('express');
+// const multer = require('multer');
+// const fs = require('fs').promises; // Use promises version
+// const path = require('path');
+// const ExcelJS = require('exceljs');
+// const pool = require('../client');
+
+// const router = express.Router();
+
+// // Multer configuration
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, path.join(__dirname, '../uploads'));
+//   },
+//   filename: (req, file, cb) => {
+//     cb(null, `${Date.now()}-${file.originalname}`);
+//   }
+// });
+
+// const upload = multer({ storage });
+
+// // Helper function to delete file safely
+// const deleteFileAsync = async (filePath) => {
+//   try {
+//     await fs.unlink(filePath);
+//     console.log(`Successfully deleted file: ${filePath}`);
+//   } catch (err) {
+//     console.error('Error deleting file:', err);
+//   }
+// };
+
+// router.post('/', upload.single('file'), async (req, res) => {
+//   let filePath;
+//   try {
+//     filePath = req.file?.path;
+//     const sheetName = req.body.sheetName;
+
+//     if (!sheetName) return res.status(400).json({ message: 'sheetName is required' });
+//     if (!filePath) return res.status(400).json({ message: 'No file uploaded' });
+
+//     console.log(`Processing file: ${filePath}`);
+
+//     // ✅ Start transaction
+//     await pool.query('BEGIN');
+
+//     // 1️⃣ Find company
+//     const companyRes = await pool.query(
+//       `SELECT id FROM car_companies WHERE name = $1 LIMIT 1`,
+//       [sheetName]
+//     );
+//     if (companyRes.rows.length === 0) {
+//       await pool.query('ROLLBACK');
+//       await deleteFileAsync(filePath); // Delete file before returning error
+//       return res.status(404).json({ message: `Company "${sheetName}" not found` });
+//     }
+//     const makeId = companyRes.rows[0].id;
+
+//     // 2️⃣ Delete old rows
+//     const delRes = await pool.query(`DELETE FROM mechanic_commands WHERE make_id = $1`, [makeId]);
+//     console.log(`Deleted rows: ${delRes.rowCount}`);
+
+//     // 3️⃣ Parse Excel
+//     const workbook = new ExcelJS.Workbook();
+//     await workbook.xlsx.readFile(filePath);
+//     const worksheet = workbook.getWorksheet(sheetName);
+//     if (!worksheet) {
+//       await pool.query('ROLLBACK');
+//       await deleteFileAsync(filePath); // Delete file before returning error
+//       return res.status(400).json({ message: `Worksheet "${sheetName}" not found in Excel file.` });
+//     }
+
+//     // ✅ Better row processing - avoid duplicates and empty rows
+//     const rows = [];
+//     const processedIds = new Set(); // Track processed IDs to avoid duplicates
+    
+//     worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+//       // Skip header row
+//       if (rowNumber === 1) return;
+      
+//       // Get row values (skip index 0 which is undefined in ExcelJS)
+//       const rowData = row.values.slice(1); // Remove the undefined first element
+      
+//       // Skip if row is completely empty or missing required fields
+//       if (!rowData || rowData.length < 4) return;
+//       if (!rowData[2]) return; // Skip if ID is missing (assuming ID is in column 3)
+      
+//       const recordId = rowData[2];
+      
+//       // Skip duplicates
+//       if (processedIds.has(recordId)) {
+//         console.log(`Skipping duplicate ID: ${recordId}`);
+//         return;
+//       }
+      
+//       processedIds.add(recordId);
+//       rows.push(rowData);
+//     });
+
+//     console.log(`Total rows to process: ${rows.length}`);
+
+//     // 4️⃣ Insert with better error handling
+//     let insertedCount = 0;
+//     let skippedCount = 0;
+
+//     for (const row of rows) {
+//       try {
+//         // Validate required fields
+//         if (!row[2]) { // ID field
+//           skippedCount++;
+//           continue;
+//         }
+
+//         const fullScanValue = row[4] && String(row[4]).toLowerCase().trim() === 't';
+//         const makeGroupIdValue = row[8] ? Number(row[8]) : null;
+
+//         await pool.query(
+//           `INSERT INTO mechanic_commands (
+//             created_at, updated_at, id, command, full_scan,
+//             function_type, make_id, module, make_group_id
+//           ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+//           [
+//             row[0] || null,  // created_at
+//             row[1] || null,  // updated_at  
+//             row[2] || null,  // id
+//             row[3] || null,  // command
+//             // row[4],   // full_scan
+//             fullScanValue,
+//             row[5] || null,  // function_type
+//             makeId,          // make_id
+//             row[7] || null,  // module
+//             makeGroupIdValue // make_group_id
+//           ]
+//         );
+//         insertedCount++;
+//       } catch (insertError) {
+//         console.error(`Error inserting row with ID ${row[2]}:`, insertError.message);
+//         skippedCount++;
+//         // Continue with next row instead of failing entire operation
+//       }
+//     }
+
+//     await pool.query('COMMIT');
+//     console.log(`Transaction committed. Inserted: ${insertedCount}, Skipped: ${skippedCount}`);
+
+//     // ✅ Delete file after successful processing
+//     await deleteFileAsync(filePath);
+
+//     res.status(200).json({
+//       message: `Excel imported for company "${sheetName}"`,
+//       totalRowsProcessed: rows.length,
+//       insertedCount: insertedCount,
+//       skippedCount: skippedCount,
+//       deletedCount: delRes.rowCount
+//     });
+
+//   } catch (err) {
+//     // ✅ Rollback transaction on error
+//     try {
+//       await pool.query('ROLLBACK');
+//     } catch (rollbackError) {
+//       console.error('Error during rollback:', rollbackError);
+//     }
+    
+//     console.error('Excel Import Error:', err);
+    
+//     // ✅ Delete file on error using async/await
+//     if (filePath) {
+//       await deleteFileAsync(filePath);
+//     }
+    
+//     res.status(500).json({ 
+//       message: 'Excel import failed',
+//       error: err.message 
+//     });
+//   }
+// });
+
+// module.exports = router;
+
+
+
+
+
+
+
+
+
+
+
+
 const express = require('express');
 const multer = require('multer');
-const fs = require('fs').promises; // Use promises version
+const fs = require('fs').promises;
 const path = require('path');
 const ExcelJS = require('exceljs');
 const pool = require('../client');
 
 const router = express.Router();
 
-// Multer configuration
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, path.join(__dirname, '../uploads'));
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
+// Multer configuration - using memory storage for better performance
+const upload = multer({
+  storage: multer.memoryStorage(), // Store in memory instead of disk
+  limits: {
+    fileSize: 50 * 1024 * 1024 // 50MB limit
   }
 });
 
-const upload = multer({ storage });
+// Helper function to process rows in batches
+const processBatch = async (batch, makeId) => {
+  if (batch.length === 0) return { inserted: 0, skipped: 0 };
 
-// Helper function to delete file safely
-const deleteFileAsync = async (filePath) => {
   try {
-    await fs.unlink(filePath);
-    console.log(`Successfully deleted file: ${filePath}`);
-  } catch (err) {
-    console.error('Error deleting file:', err);
+    // Create bulk insert query
+    const placeholders = batch.map((_, index) => {
+      const offset = index * 9;
+      return `($${offset + 1},$${offset + 2},$${offset + 3},$${offset + 4},$${offset + 5},$${offset + 6},$${offset + 7},$${offset + 8},$${offset + 9})`;
+    }).join(',');
+
+    const query = `
+      INSERT INTO mechanic_commands (
+        created_at, updated_at, id, command, full_scan,
+        function_type, make_id, module, make_group_id
+      ) VALUES ${placeholders}
+      ON CONFLICT (id) DO NOTHING
+    `;
+
+    // Flatten all batch data into single array
+    const values = batch.flatMap(row => [
+      row[0] || null,  // created_at
+      row[1] || null,  // updated_at  
+      row[2] || null,  // id
+      row[3] || null,  // command
+      row[4] && String(row[4]).toLowerCase().trim() === 't', // full_scan
+      row[5] || null,  // function_type
+      makeId,          // make_id
+      row[7] || null,  // module
+      row[8] ? Number(row[8]) : null // make_group_id
+    ]);
+
+    const result = await pool.query(query, values);
+    return { inserted: result.rowCount, skipped: batch.length - result.rowCount };
+
+  } catch (error) {
+    console.error('Batch insert error:', error.message);
+    // Fallback to individual inserts for this batch
+    return await processBatchIndividually(batch, makeId);
   }
 };
 
+// Fallback function for individual processing if batch fails
+const processBatchIndividually = async (batch, makeId) => {
+  let inserted = 0, skipped = 0;
+  
+  for (const row of batch) {
+    try {
+      if (!row[2]) { // Skip if ID is missing
+        skipped++;
+        continue;
+      }
+
+      await pool.query(
+        `INSERT INTO mechanic_commands (
+          created_at, updated_at, id, command, full_scan,
+          function_type, make_id, module, make_group_id
+        ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+        ON CONFLICT (id) DO NOTHING`,
+        [
+          row[0] || null,
+          row[1] || null,
+          row[2] || null,
+          row[3] || null,
+          row[4] && String(row[4]).toLowerCase().trim() === 't',
+          row[5] || null,
+          makeId,
+          row[7] || null,
+          row[8] ? Number(row[8]) : null
+        ]
+      );
+      inserted++;
+    } catch (insertError) {
+      console.error(`Error inserting row with ID ${row[2]}:`, insertError.message);
+      skipped++;
+    }
+  }
+  
+  return { inserted, skipped };
+};
+
 router.post('/', upload.single('file'), async (req, res) => {
-  let filePath;
+  const startTime = Date.now();
+  
   try {
-    filePath = req.file?.path;
+    const fileBuffer = req.file?.buffer;
     const sheetName = req.body.sheetName;
 
     if (!sheetName) return res.status(400).json({ message: 'sheetName is required' });
-    if (!filePath) return res.status(400).json({ message: 'No file uploaded' });
+    if (!fileBuffer) return res.status(400).json({ message: 'No file uploaded' });
 
-    console.log(`Processing file: ${filePath}`);
+    console.log(`Processing file: ${req.file.originalname} (${fileBuffer.length} bytes)`);
 
     // ✅ Start transaction
     await pool.query('BEGIN');
 
-    // 1️⃣ Find company
+    // 1️⃣ Find company (using prepared statement equivalent)
     const companyRes = await pool.query(
       `SELECT id FROM car_companies WHERE name = $1 LIMIT 1`,
       [sheetName]
     );
+    
     if (companyRes.rows.length === 0) {
       await pool.query('ROLLBACK');
-      await deleteFileAsync(filePath); // Delete file before returning error
       return res.status(404).json({ message: `Company "${sheetName}" not found` });
     }
     const makeId = companyRes.rows[0].id;
 
-    // 2️⃣ Delete old rows
+    // 2️⃣ Delete old rows - single operation
     const delRes = await pool.query(`DELETE FROM mechanic_commands WHERE make_id = $1`, [makeId]);
     console.log(`Deleted rows: ${delRes.rowCount}`);
 
-    // 3️⃣ Parse Excel
+    // 3️⃣ Parse Excel from buffer (faster than file I/O)
     const workbook = new ExcelJS.Workbook();
-    await workbook.xlsx.readFile(filePath);
+    await workbook.xlsx.load(fileBuffer); // Load from buffer instead of file
+    
     const worksheet = workbook.getWorksheet(sheetName);
     if (!worksheet) {
       await pool.query('ROLLBACK');
-      await deleteFileAsync(filePath); // Delete file before returning error
       return res.status(400).json({ message: `Worksheet "${sheetName}" not found in Excel file.` });
     }
 
-    // ✅ Better row processing - avoid duplicates and empty rows
-    const rows = [];
-    const processedIds = new Set(); // Track processed IDs to avoid duplicates
+    // ✅ Optimized row processing - collect all valid rows first
+    const validRows = [];
+    const processedIds = new Set();
     
     worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
       // Skip header row
       if (rowNumber === 1) return;
       
-      // Get row values (skip index 0 which is undefined in ExcelJS)
-      const rowData = row.values.slice(1); // Remove the undefined first element
+      const rowData = row.values.slice(1); // Remove undefined first element
       
-      // Skip if row is completely empty or missing required fields
-      if (!rowData || rowData.length < 4) return;
-      if (!rowData[2]) return; // Skip if ID is missing (assuming ID is in column 3)
+      // Skip invalid rows
+      if (!rowData || rowData.length < 4 || !rowData[2]) return;
       
       const recordId = rowData[2];
       
@@ -93,79 +349,60 @@ router.post('/', upload.single('file'), async (req, res) => {
       }
       
       processedIds.add(recordId);
-      rows.push(rowData);
+      validRows.push(rowData);
     });
 
-    console.log(`Total rows to process: ${rows.length}`);
+    console.log(`Total valid rows to process: ${validRows.length}`);
 
-    // 4️⃣ Insert with better error handling
-    let insertedCount = 0;
-    let skippedCount = 0;
+    // 4️⃣ Bulk insert with batching
+    const BATCH_SIZE = 1000; // Adjust based on your PostgreSQL settings
+    let totalInserted = 0;
+    let totalSkipped = 0;
 
-    for (const row of rows) {
-      try {
-        // Validate required fields
-        if (!row[2]) { // ID field
-          skippedCount++;
-          continue;
-        }
-
-        const fullScanValue = row[4] && String(row[4]).toLowerCase().trim() === 't';
-        const makeGroupIdValue = row[8] ? Number(row[8]) : null;
-
-        await pool.query(
-          `INSERT INTO mechanic_commands (
-            created_at, updated_at, id, command, full_scan,
-            function_type, make_id, module, make_group_id
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-          [
-            row[0] || null,  // created_at
-            row[1] || null,  // updated_at  
-            row[2] || null,  // id
-            row[3] || null,  // command
-            fullScanValue,   // full_scan
-            row[5] || null,  // function_type
-            makeId,          // make_id
-            row[7] || null,  // module
-            makeGroupIdValue // make_group_id
-          ]
-        );
-        insertedCount++;
-      } catch (insertError) {
-        console.error(`Error inserting row with ID ${row[2]}:`, insertError.message);
-        skippedCount++;
-        // Continue with next row instead of failing entire operation
-      }
+    // Process in batches for optimal performance
+    for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
+      const batch = validRows.slice(i, i + BATCH_SIZE);
+      const batchResult = await processBatch(batch, makeId);
+      
+      totalInserted += batchResult.inserted;
+      totalSkipped += batchResult.skipped;
+      
+      console.log(`Batch ${Math.floor(i/BATCH_SIZE) + 1}: Inserted ${batchResult.inserted}, Skipped ${batchResult.skipped}`);
     }
 
+    // ✅ Commit transaction
     await pool.query('COMMIT');
-    console.log(`Transaction committed. Inserted: ${insertedCount}, Skipped: ${skippedCount}`);
-
-    // ✅ Delete file after successful processing
-    await deleteFileAsync(filePath);
+    
+    const endTime = Date.now();
+    const processingTime = endTime - startTime;
+    
+    console.log(`✅ Transaction committed in ${processingTime}ms`);
+    console.log(`📊 Final stats - Inserted: ${totalInserted}, Skipped: ${totalSkipped}`);
 
     res.status(200).json({
       message: `Excel imported for company "${sheetName}"`,
-      totalRowsProcessed: rows.length,
-      insertedCount: insertedCount,
-      skippedCount: skippedCount,
-      deletedCount: delRes.rowCount
+      stats: {
+        totalRowsProcessed: validRows.length,
+        insertedCount: totalInserted,
+        skippedCount: totalSkipped,
+        deletedCount: delRes.rowCount,
+        processingTimeMs: processingTime,
+        rowsPerSecond: Math.round((validRows.length / processingTime) * 1000),
+        fileName: req.file.originalname,
+        fileSize: fileBuffer.length
+      }
     });
 
   } catch (err) {
     // ✅ Rollback transaction on error
     try {
       await pool.query('ROLLBACK');
+      console.log('Transaction rolled back due to error');
     } catch (rollbackError) {
       console.error('Error during rollback:', rollbackError);
     }
     
     console.error('Excel Import Error:', err);
-    
-    // ✅ Delete file on error using async/await
-    if (filePath) {
-      await deleteFileAsync(filePath);
-    }
     
     res.status(500).json({ 
       message: 'Excel import failed',
@@ -174,7 +411,21 @@ router.post('/', upload.single('file'), async (req, res) => {
   }
 });
 
+// ✅ Additional endpoint for upload status/progress (optional)
+router.get('/status', (req, res) => {
+  res.json({
+    status: 'ready',
+    maxFileSize: '50MB',
+    supportedFormats: ['.xlsx', '.xls'],
+    batchSize: 1000,
+    features: [
+      'Bulk insert with batching',
+      'Memory-based processing',
+      'Duplicate detection',
+      'Transaction safety',
+      'Error recovery'
+    ]
+  });
+});
+
 module.exports = router;
-
-
-

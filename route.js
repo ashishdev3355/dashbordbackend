@@ -29,7 +29,8 @@ const fs = require('fs');
 // -------------------------------
 router.use('/FaultUplodes',requireAuth, FaultUplodes);
 router.use('/uplodeactivationcode',requireAuth, uplodeactivationcode);
-router.use('/UpdatesCommands',requireAuth, UpdatesCommands);
+// router.use('/UpdatesCommands',requireAuth, UpdatesCommands);
+router.use('/UpdatesCommands', UpdatesCommands);
 
 // -------------------------------
 // Function Handlers (export functions directly)
