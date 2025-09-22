@@ -27,10 +27,11 @@ const fs = require('fs');
 // -------------------------------
 // Router for file uploads (FaultUplodes exports a router)
 // -------------------------------
-router.use('/FaultUplodes',requireAuth, FaultUplodes);
+// router.use('/FaultUplodes',requireAuth, FaultUplodes);
+router.use('/FaultUplodes', FaultUplodes);
 router.use('/uplodeactivationcode',requireAuth, uplodeactivationcode);
-// router.use('/UpdatesCommands',requireAuth, UpdatesCommands);
-router.use('/UpdatesCommands', UpdatesCommands);
+router.use('/UpdatesCommands',requireAuth, UpdatesCommands);
+// router.use('/UpdatesCommands', UpdatesCommands);
 
 // -------------------------------
 // Function Handlers (export functions directly)
