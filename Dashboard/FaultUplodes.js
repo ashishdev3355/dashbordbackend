@@ -525,6 +525,8 @@ router.post('/', upload.single('file'), async (req, res) => {
     // ⚡ Parallel processing of all tables (if they don't have dependencies)
     const importPromises = [
       // my_fault_codes
+    
+
       bulkImportToTable(
         workbook,
         'fault_descriptions',
@@ -536,7 +538,31 @@ router.post('/', upload.single('file'), async (req, res) => {
           repair_difficulty: row[4] ? Number(row[4]) : null,
           make: row[5]?.toString() || null,
           company_id: row[6] ? Number(row[6]) : null,
-          generic: row[7] ? String(row[7]).toLowerCase() === 'true' : false
+          // Robust boolean conversion that handles all edge cases
+          generic: (() => {
+            const val = row[7];
+            
+            // Handle null, undefined, empty values
+            if (val === null || val === undefined || val === '') return false;
+            
+            // Convert to string and normalize
+            const strVal = String(val).trim().toLowerCase();
+            
+            // Handle various truthy representations
+            if (strVal === '1' || strVal === 'true' || strVal === 'yes' || strVal === 'y') return true;
+            
+            // Handle various falsy representations
+            if (strVal === '0' || strVal === 'false' || strVal === 'no' || strVal === 'n') return false;
+            
+            // Handle numeric values
+            const numVal = Number(val);
+            if (!isNaN(numVal)) {
+              return numVal > 0; // Any positive number is true, 0 or negative is false
+            }
+            
+            // Default to false for any other case
+            return false;
+          })()
         }, ['dtc', 'title', 'make', 'company_id']),
         ['dtc', 'company_id'],
         1000 // batch size
