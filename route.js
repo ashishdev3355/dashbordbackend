@@ -20,6 +20,7 @@ const uplodeactivationcode = require("./Dashboard/UplodeActivationCode.js");
 const CommandAPI = require("./Dashboard/CommandAPI.js");
 const UpdatesCommands = require("./Dashboard/UpdatesCommands.js");
 const LiveDataCommands = require("./Dashboard/LiveDataCommands.js");
+const faultCodes = require("./Dashboard/faultCodes.js");
 
 const path = require('path');
 const fs = require('fs');
@@ -27,8 +28,8 @@ const fs = require('fs');
 // -------------------------------
 // Router for file uploads (FaultUplodes exports a router)
 // -------------------------------
-router.use('/FaultUplodes',requireAuth, FaultUplodes);
-// router.use('/FaultUplodes', FaultUplodes);
+// router.use('/FaultUplodes',requireAuth, FaultUplodes);
+router.use('/faultCodes', faultCodes);
 router.use('/uplodeactivationcode',requireAuth, uplodeactivationcode);
 router.use('/UpdatesCommands',requireAuth, UpdatesCommands);
 // router.use('/UpdatesCommands', UpdatesCommands);
