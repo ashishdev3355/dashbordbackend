@@ -1,7 +1,5 @@
 const express = require('express');
 const multer = require('multer');
-const fs = require('fs').promises;
-const path = require('path');
 const ExcelJS = require('exceljs');
 const pool = require('../client');
 
@@ -14,6 +12,28 @@ const upload = multer({
     fileSize: 50 * 1024 * 1024 // 50MB limit
   }
 });
+
+// Helper function to convert values to boolean
+const toBool = (val) => {
+  // Handle null/undefined/empty
+  if (val === null || val === undefined || val === '') return null;
+  
+  // Handle boolean values directly
+  if (typeof val === 'boolean') return val;
+  
+  // Handle numeric values
+  if (typeof val === 'number') return val === 1;
+  
+  // Convert to string and check
+  const str = String(val).toUpperCase().trim();
+  
+  // Excel TRUE should become string "TRUE"
+  if (str === 'TRUE' || str === '1' || str === 'YES') return true;
+  if (str === 'FALSE' || str === '0' || str === 'NO') return false;
+  
+  // Default to false for unknown values
+  return false;
+};
 
 // Helper function to process rows in batches
 const processBatch = async (batch, makeId) => {
@@ -34,16 +54,15 @@ const processBatch = async (batch, makeId) => {
       ON CONFLICT (id) DO NOTHING
     `;
 
-    // Flatten all batch data into single array
     const values = batch.flatMap(row => [
-      row[0] || null,  // created_at
-      row[1] || null,  // updated_at  
-      row[2] || null,  // id
-      row[3] || null,  // command
-      row[4] && String(row[4]).toLowerCase().trim() === 't', // full_scan
-      row[5] || null,  // function_type
-      makeId,          // make_id
-      row[7] || null,  // module
+      row[0] || null,                // created_at
+      row[1] || null,                // updated_at  
+      row[2] || null,                // id
+      row[3] || null,                // command
+      toBool(row[4]),                // full_scan - FIXED
+      row[5] || null,                // function_type
+      makeId,                        // make_id
+      row[7] || null,                // module
       row[8] ? Number(row[8]) : null // make_group_id
     ]);
 
@@ -75,15 +94,15 @@ const processBatchIndividually = async (batch, makeId) => {
         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
         ON CONFLICT (id) DO NOTHING`,
         [
-          row[0] || null,
-          row[1] || null,
-          row[2] || null,
-          row[3] || null,
-          row[4] && String(row[4]).toLowerCase().trim() === 't',
-          row[5] || null,
-          makeId,
-          row[7] || null,
-          row[8] ? Number(row[8]) : null
+          row[0] || null,              // created_at
+          row[1] || null,              // updated_at
+          row[2] || null,              // id
+          row[3] || null,              // command
+          toBool(row[4]),              // full_scan - FIXED: Use the toBool function consistently
+          row[5] || null,              // function_type
+          makeId,                      // make_id
+          row[7] || null,              // module
+          row[8] ? Number(row[8]) : null // make_group_id
         ]
       );
       inserted++;
@@ -141,14 +160,50 @@ router.post('/', upload.single('file'), async (req, res) => {
     const validRows = [];
     const processedIds = new Set();
     
+    console.log('=== DEBUGGING EXCEL COLUMN MAPPING ===');
+    
     worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
-      // Skip header row
-      if (rowNumber === 1) return;
+      // Skip header row but log it for reference
+      if (rowNumber === 1) {
+        console.log('Headers:', row.values);
+        return;
+      }
       
-      const rowData = row.values.slice(1); // Remove undefined first element
+      // Debug first 3 data rows to understand the structure
+      if (rowNumber <= 4) {
+        console.log(`\n--- Row ${rowNumber} Debug ---`);
+        console.log('Raw row.values:', row.values);
+        console.log('Length:', row.values.length);
+        
+        // Check each column
+        for (let i = 1; i < row.values.length; i++) {
+          console.log(`Column ${i} (${String.fromCharCode(64 + i)}):`, row.values[i], typeof row.values[i]);
+        }
+        
+        // Test our boolean conversion on what should be the full_scan column
+        console.log('Testing column 5 (E - full_scan):', row.values[5], '→', toBool(row.values[5]));
+      }
+      
+      // Get all cell values (ExcelJS includes undefined at index 0)
+      const rawValues = row.values;
+      
+      // Based on your Excel image, columns are:
+      // A(1)=created_at, B(2)=updated_at, C(3)=id, D(4)=command, 
+      // E(5)=full_scan, F(6)=function_type, G(7)=make_id, H(8)=module, I(9)=make_group_id
+      const rowData = [
+        rawValues[1],  // A: created_at
+        rawValues[2],  // B: updated_at
+        rawValues[3],  // C: id
+        rawValues[4],  // D: command
+        rawValues[5],  // E: full_scan ← This should be TRUE
+        rawValues[6],  // F: function_type
+        rawValues[7],  // G: make_id (will be replaced with our makeId)
+        rawValues[8],  // H: module
+        rawValues[9]   // I: make_group_id
+      ];
       
       // Skip invalid rows
-      if (!rowData || rowData.length < 4 || !rowData[2]) return;
+      if (!rowData[2]) return; // Skip if no ID
       
       const recordId = rowData[2];
       

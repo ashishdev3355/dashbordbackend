@@ -21,6 +21,8 @@ const CommandAPI = require("./Dashboard/CommandAPI.js");
 const UpdatesCommands = require("./Dashboard/UpdatesCommands.js");
 const LiveDataCommands = require("./Dashboard/LiveDataCommands.js");
 const faultCodes = require("./Dashboard/faultCodes.js");
+const faultCodesList = require("./Dashboard/faultCodesList.js");
+// import { faultCodeList } from "./Dashboard/faultCodesList.js";
 
 const path = require('path');
 const fs = require('fs');
@@ -31,8 +33,9 @@ const fs = require('fs');
 // router.use('/FaultUplodes',requireAuth, FaultUplodes);
 router.use('/faultCodes', faultCodes);
 router.use('/uplodeactivationcode',requireAuth, uplodeactivationcode);
-router.use('/UpdatesCommands',requireAuth, UpdatesCommands);
-// router.use('/UpdatesCommands', UpdatesCommands);
+// router.use('/UpdatesCommands',requireAuth, UpdatesCommands);
+router.use('/UpdatesCommands', UpdatesCommands);
+
 
 // -------------------------------
 // Function Handlers (export functions directly)
@@ -50,6 +53,8 @@ router.get('/SPFCommands',requireAuth, SPFCommands);
 router.get('/FetchMakeList',requireAuth, FetchMakeList);
 router.get('/ModelList',requireAuth, ModelList);
 router.get('/LiveDataCommands', requireAuth,LiveDataCommands);
+// router.get('/faultCodesList', requireAuth,faultCodesList);
+router.get('/faultCodesList', faultCodesList);
 
 
 
