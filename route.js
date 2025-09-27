@@ -33,8 +33,8 @@ const fs = require('fs');
 // router.use('/FaultUplodes',requireAuth, FaultUplodes);
 router.use('/faultCodes', faultCodes);
 router.use('/uplodeactivationcode',requireAuth, uplodeactivationcode);
-// router.use('/UpdatesCommands',requireAuth, UpdatesCommands);
-router.use('/UpdatesCommands', UpdatesCommands);
+router.use('/UpdatesCommands',requireAuth, UpdatesCommands);
+// router.use('/UpdatesCommands', UpdatesCommands);
 
 
 // -------------------------------
