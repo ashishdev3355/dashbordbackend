@@ -19,7 +19,7 @@ const ScanDetail = async (req, res) => {
     const filters = [];
     const values = [];
 
-    // Optional filters
+    // 🔍 Dynamic filters
     if (email) {
       values.push(`%${email}%`);
       filters.push(`u.email ILIKE $${values.length}`);
@@ -57,22 +57,22 @@ const ScanDetail = async (req, res) => {
       filters.push(`scan.scan_end_time <= $${values.length}`);
     }
 
-    // not undesting this 
-    // Pagination logic
+    // 🔢 Pagination
     const offset = (parseInt(page) - 1) * parseInt(limit);
-    values.push(limit, offset);
+    values.push(limit);
+    values.push(offset);
 
-    // Base query with filters
+    // WHERE clause
     const whereClause = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
 
+    // ✅ Main query
     const query = `
       SELECT
         scan.*,
         u.email,
         u.country_id
-      FROM users u
-      LEFT JOIN mode_alls_new scan
-        ON u.id = scan.user_id
+      FROM mode_alls_new scan
+      LEFT JOIN users u ON u.id = scan.user_id
       ${whereClause}
       ORDER BY scan.user_id DESC
       LIMIT $${values.length - 1} OFFSET $${values.length}
@@ -80,23 +80,25 @@ const ScanDetail = async (req, res) => {
 
     const result = await client.query(query, values);
 
-    // Total count for pagination
+    // ✅ Count query (without limit & offset)
     const countQuery = `
       SELECT COUNT(*) AS total
-      FROM users u
-      LEFT JOIN mode_alls_new scan
-        ON u.id = scan.user_id
+      FROM mode_alls_new scan
+      LEFT JOIN users u ON u.id = scan.user_id
       ${whereClause}
     `;
 
-    const countResult = await client.query(countQuery, values.slice(0, values.length - 2));
+    const countValues = values.slice(0, values.length - 2);
+    const countResult = await client.query(countQuery, countValues);
 
-    // Remove unnecessary fields
+    // ✅ Sanitize output
     const sanitizedScan = result.rows.map(({ id, scan_id, user_id, ...rest }) => rest);
 
     res.status(200).json({
       scans: sanitizedScan,
-      total: parseInt(countResult.rows[0].total, 10)
+      total: parseInt(countResult.rows[0].total, 10),
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(countResult.rows[0].total / limit)
     });
 
   } catch (error) {
@@ -106,7 +108,3 @@ const ScanDetail = async (req, res) => {
 };
 
 module.exports = ScanDetail;
-
-
-
-
