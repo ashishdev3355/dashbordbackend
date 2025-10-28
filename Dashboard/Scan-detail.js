@@ -92,7 +92,10 @@ const ScanDetail = async (req, res) => {
     const countResult = await client.query(countQuery, countValues);
 
     // ✅ Sanitize output
-    const sanitizedScan = result.rows.map(({ id, scan_id, user_id, ...rest }) => rest);
+    // const sanitizedScan = result.rows.map(({ id, scan_id, user_id, ...rest }) => rest);
+    const sanitizedScan = result.rows.map(({ user_id, ...rest }) => rest);
+    // console.log("sanitizedScan",sanitizedScan);
+    
 
     res.status(200).json({
       scans: sanitizedScan,

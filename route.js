@@ -3,7 +3,6 @@
 const express = require('express');
 const router = express.Router();
 const requireAuth = require("./middleware/tokenverfy.js");
-
 const getUsers = require("./Dashboard/user-detail");
 const ScanDetail = require("./Dashboard/Scan-detail");
 const SpecialFunctions = require("./Dashboard/Special-Functions");
@@ -70,9 +69,7 @@ router.get('/test', (req, res) => {
   res.json({ message: 'Server is working' });
 });
 
-// -------------------------------
-// Ensure uploads directory exists
-// -------------------------------
+
 const uploadsDir = path.join(__dirname, './uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
