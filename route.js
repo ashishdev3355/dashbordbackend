@@ -1,6 +1,8 @@
 
 // route.js - Complete with all your routes
 const express = require('express');
+const path = require('path');
+const fs = require('fs');
 const router = express.Router();
 const requireAuth = require("./middleware/tokenverfy.js");
 const getUsers = require("./Dashboard/user-detail");
@@ -26,39 +28,36 @@ const FaultCodeSolutions = require("./Dashboard/FaultCodeSolutions.js");
 const FaultCodeSymptoms = require("./Dashboard/FaultCodeSymptoms.js");
 
 
-const path = require('path');
-const fs = require('fs');
-
 // -------------------------------
 // Router for file uploads (FaultUplodes exports a router)
 // -------------------------------
 // router.use('/FaultUplodes',requireAuth, FaultUplodes);
 router.use('/faultCodes', faultCodes);
-router.use('/uplodeactivationcode',requireAuth, uplodeactivationcode);
-router.use('/UpdatesCommands',requireAuth, UpdatesCommands);
+router.use('/uplodeactivationcode', requireAuth, uplodeactivationcode);
+router.use('/UpdatesCommands', requireAuth, UpdatesCommands);
 // router.use('/UpdatesCommands', UpdatesCommands);
 
 
 // -------------------------------
 // Function Handlers (export functions directly)
 // -------------------------------
-router.get('/users',requireAuth, getUsers);
-router.get('/ScanDetail',requireAuth, ScanDetail);
-router.get('/CommandAPI',requireAuth, CommandAPI);
-router.get('/SpecialFunctions',requireAuth, SpecialFunctions);
-router.get('/ActuationsDetail',requireAuth, ActuationsDetail);
-router.get('/getCoverage',requireAuth, getCoverage);
-router.get('/ActuationCommands',requireAuth, ActuationCommands);
-router.get('/CustomCommands',requireAuth, CustomCommands);
-router.get('/OdometerAPI', requireAuth,OdometerAPI);
-router.get('/SPFCommands',requireAuth, SPFCommands);
-router.get('/FetchMakeList',requireAuth, FetchMakeList);
-router.get('/ModelList',requireAuth, ModelList);
-router.get('/LiveDataCommands', requireAuth,LiveDataCommands);
-router.get('/faultCodesList', requireAuth,faultCodesList);
-router.get('/FaultCodeCauses', requireAuth,FaultCodeCauses);
-router.get('/FaultCodeSolutions', requireAuth,FaultCodeSolutions);
-router.get('/FaultCodeSymptoms',requireAuth, FaultCodeSymptoms);
+router.get('/users', requireAuth, getUsers);
+router.get('/ScanDetail', requireAuth, ScanDetail);
+router.get('/CommandAPI', requireAuth, CommandAPI);
+router.get('/SpecialFunctions', requireAuth, SpecialFunctions);
+router.get('/ActuationsDetail', requireAuth, ActuationsDetail);
+router.get('/getCoverage', requireAuth, getCoverage);
+router.get('/ActuationCommands', requireAuth, ActuationCommands);
+router.get('/CustomCommands', requireAuth, CustomCommands);
+router.get('/OdometerAPI', requireAuth, OdometerAPI);
+router.get('/SPFCommands', requireAuth, SPFCommands);
+router.get('/FetchMakeList', requireAuth, FetchMakeList);
+router.get('/ModelList', requireAuth, ModelList);
+router.get('/LiveDataCommands', requireAuth, LiveDataCommands);
+router.get('/faultCodesList', requireAuth, faultCodesList);
+router.get('/FaultCodeCauses', requireAuth, FaultCodeCauses);
+router.get('/FaultCodeSolutions', requireAuth, FaultCodeSolutions);
+router.get('/FaultCodeSymptoms', requireAuth, FaultCodeSymptoms);
 
 
 
