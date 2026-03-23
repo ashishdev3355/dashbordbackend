@@ -28,6 +28,8 @@ const FaultCodeSolutions = require("./Dashboard/FaultCodeSolutions.js");
 const FaultCodeSymptoms = require("./Dashboard/FaultCodeSymptoms.js");
 
 
+const LiveDateCommandsUplode = require("./Dashboard/LiveDateCommandsUplode.js");
+
 // -------------------------------
 // Router for file uploads (FaultUplodes exports a router)
 // -------------------------------
@@ -35,6 +37,8 @@ const FaultCodeSymptoms = require("./Dashboard/FaultCodeSymptoms.js");
 router.use('/faultCodes', faultCodes);
 router.use('/uplodeactivationcode', requireAuth, uplodeactivationcode);
 router.use('/UpdatesCommands', requireAuth, UpdatesCommands);
+// router.use('/LiveDateCommandsUplode', requireAuth, LiveDateCommandsUplode);
+router.use('/LiveDateCommandsUplode', LiveDateCommandsUplode);
 // router.use('/UpdatesCommands', UpdatesCommands);
 
 

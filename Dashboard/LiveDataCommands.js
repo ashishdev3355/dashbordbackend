@@ -3,7 +3,7 @@ const client = require("../client");
 const LiveDataCommands = async (req, res) => {
   try {
     console.info("Execution start");
-    console.log("Query params:", req.query); // Debug log
+    
     
     const { make, model, module, limit = 30, page = 1 } = req.query;
 
