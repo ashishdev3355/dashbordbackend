@@ -48,9 +48,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Use main router
-app.use('/api', apiV1);
-
 app.use("/api", authRoutes);
+app.use('/api', apiV1);
 
 // Health check endpoint
 app.get("/app/health", (req, res) => {

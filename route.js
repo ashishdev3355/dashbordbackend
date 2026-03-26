@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const router = express.Router();
 const requireAuth = require("./middleware/tokenverfy.js");
+const rbacMiddleware = require("./middleware/rbac.js");
 const getUsers = require("./Dashboard/user-detail");
 const ScanDetail = require("./Dashboard/Scan-detail");
 const SpecialFunctions = require("./Dashboard/Special-Functions");
@@ -33,11 +34,11 @@ const LiveDateCommandsUplode = require("./Dashboard/LiveDateCommandsUplode.js");
 // -------------------------------
 // Router for file uploads (FaultUplodes exports a router)
 // -------------------------------
-// router.use('/FaultUplodes',requireAuth, FaultUplodes);
+// router.use('/FaultUplodes',requireAuth, rbacMiddleware, FaultUplodes);
 router.use('/faultCodes', faultCodes);
-router.use('/uplodeactivationcode', requireAuth, uplodeactivationcode);
-router.use('/UpdatesCommands', requireAuth, UpdatesCommands);
-// router.use('/LiveDateCommandsUplode', requireAuth, LiveDateCommandsUplode);
+router.use('/uplodeactivationcode', requireAuth, rbacMiddleware, uplodeactivationcode);
+router.use('/UpdatesCommands', requireAuth, rbacMiddleware, UpdatesCommands);
+// router.use('/LiveDateCommandsUplode', requireAuth, rbacMiddleware, LiveDateCommandsUplode);
 router.use('/LiveDateCommandsUplode', LiveDateCommandsUplode);
 // router.use('/UpdatesCommands', UpdatesCommands);
 
@@ -45,23 +46,23 @@ router.use('/LiveDateCommandsUplode', LiveDateCommandsUplode);
 // -------------------------------
 // Function Handlers (export functions directly)
 // -------------------------------
-router.get('/users', requireAuth, getUsers);
-router.get('/ScanDetail', requireAuth, ScanDetail);
-router.get('/CommandAPI', requireAuth, CommandAPI);
-router.get('/SpecialFunctions', requireAuth, SpecialFunctions);
-router.get('/ActuationsDetail', requireAuth, ActuationsDetail);
-router.get('/getCoverage', requireAuth, getCoverage);
-router.get('/ActuationCommands', requireAuth, ActuationCommands);
-router.get('/CustomCommands', requireAuth, CustomCommands);
-router.get('/OdometerAPI', requireAuth, OdometerAPI);
-router.get('/SPFCommands', requireAuth, SPFCommands);
-router.get('/FetchMakeList', requireAuth, FetchMakeList);
-router.get('/ModelList', requireAuth, ModelList);
-router.get('/LiveDataCommands', requireAuth, LiveDataCommands);
-router.get('/faultCodesList', requireAuth, faultCodesList);
-router.get('/FaultCodeCauses', requireAuth, FaultCodeCauses);
-router.get('/FaultCodeSolutions', requireAuth, FaultCodeSolutions);
-router.get('/FaultCodeSymptoms', requireAuth, FaultCodeSymptoms);
+router.get('/users', requireAuth, rbacMiddleware, getUsers);
+router.get('/ScanDetail', requireAuth, rbacMiddleware, ScanDetail);
+router.get('/CommandAPI', requireAuth, rbacMiddleware, CommandAPI);
+router.get('/SpecialFunctions', requireAuth, rbacMiddleware, SpecialFunctions);
+router.get('/ActuationsDetail', requireAuth, rbacMiddleware, ActuationsDetail);
+router.get('/getCoverage', requireAuth, rbacMiddleware, getCoverage);
+router.get('/ActuationCommands', requireAuth, rbacMiddleware, ActuationCommands);
+router.get('/CustomCommands', requireAuth, rbacMiddleware, CustomCommands);
+router.get('/OdometerAPI', requireAuth, rbacMiddleware, OdometerAPI);
+router.get('/SPFCommands', requireAuth, rbacMiddleware, SPFCommands);
+router.get('/FetchMakeList', requireAuth, rbacMiddleware, FetchMakeList);
+router.get('/ModelList', requireAuth, rbacMiddleware, ModelList);
+router.get('/LiveDataCommands', requireAuth, rbacMiddleware, LiveDataCommands);
+router.get('/faultCodesList', requireAuth, rbacMiddleware, faultCodesList);
+router.get('/FaultCodeCauses', requireAuth, rbacMiddleware, FaultCodeCauses);
+router.get('/FaultCodeSolutions', requireAuth, rbacMiddleware, FaultCodeSolutions);
+router.get('/FaultCodeSymptoms', requireAuth, rbacMiddleware, FaultCodeSymptoms);
 
 
 
