@@ -2,7 +2,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
-const pool = require("./client");
+const pool = require("./client.js");
 const requireAuth = require("./middleware/tokenverfy.js");
 
 const router = express.Router();
