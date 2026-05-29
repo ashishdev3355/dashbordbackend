@@ -18,6 +18,7 @@ const OdometerAPI = require("./Dashboard/OdometerAPI.js");
 const SPFCommands = require("./Dashboard/SPFCommands.js");
 const FetchMakeList = require("./Dashboard/FetchMakeList.js");
 const ModelList = require("./Dashboard/ModelList.js");
+const fetch_coverage = require("./Dashboard/fetch_coverage.js");
 const uplodeactivationcode = require("./Dashboard/UplodeActivationCode.js");
 const CommandAPI = require("./Dashboard/CommandAPI.js");
 const UpdatesCommands = require("./Dashboard/UpdatesCommands.js");
@@ -46,6 +47,8 @@ router.use('/LiveDateCommandsUplode', LiveDateCommandsUplode);
 // -------------------------------
 // Function Handlers (export functions directly)
 // -------------------------------
+const getActivationCodes = require("./Dashboard/ActivationCodes.js");
+
 router.get('/users', requireAuth, rbacMiddleware, getUsers);
 router.get('/ScanDetail', requireAuth, rbacMiddleware, ScanDetail);
 router.get('/CommandAPI', requireAuth, rbacMiddleware, CommandAPI);
@@ -56,13 +59,15 @@ router.get('/ActuationCommands', requireAuth, rbacMiddleware, ActuationCommands)
 router.get('/CustomCommands', requireAuth, rbacMiddleware, CustomCommands);
 router.get('/OdometerAPI', requireAuth, rbacMiddleware, OdometerAPI);
 router.get('/SPFCommands', requireAuth, rbacMiddleware, SPFCommands);
-router.get('/FetchMakeList', requireAuth, rbacMiddleware, FetchMakeList);
+router.get('/FetchMakeList', FetchMakeList);
 router.get('/ModelList', requireAuth, rbacMiddleware, ModelList);
 router.get('/LiveDataCommands', requireAuth, rbacMiddleware, LiveDataCommands);
 router.get('/faultCodesList', requireAuth, rbacMiddleware, faultCodesList);
 router.get('/FaultCodeCauses', requireAuth, rbacMiddleware, FaultCodeCauses);
 router.get('/FaultCodeSolutions', requireAuth, rbacMiddleware, FaultCodeSolutions);
 router.get('/FaultCodeSymptoms', requireAuth, rbacMiddleware, FaultCodeSymptoms);
+router.get('/activation-codes', requireAuth, rbacMiddleware, getActivationCodes);
+router.get('/fetch_coverage', fetch_coverage);
 
 
 
