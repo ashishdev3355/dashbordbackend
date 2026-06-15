@@ -70,9 +70,15 @@ const ScanDetail = async (req, res) => {
       SELECT
         scan.*,
         u.email,
-        u.country_id
+        u.country_id,
+        bt.device_name AS bluetooth_device
       FROM mode_alls_new scan
       LEFT JOIN users u ON u.id = scan.user_id
+      LEFT JOIN (
+        SELECT DISTINCT ON (user_id) user_id, device_name
+        FROM bluetooth_devices
+        ORDER BY user_id, created_at DESC
+      ) bt ON bt.user_id = scan.user_id
       ${whereClause}
       ORDER BY scan.user_id DESC
       LIMIT $${values.length - 1} OFFSET $${values.length}
