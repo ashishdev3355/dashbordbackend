@@ -80,7 +80,7 @@ const ScanDetail = async (req, res) => {
         ORDER BY user_id, created_at DESC
       ) bt ON bt.user_id = scan.user_id
       ${whereClause}
-      ORDER BY scan.user_id DESC
+      ORDER BY scan.id DESC
       LIMIT $${values.length - 1} OFFSET $${values.length}
     `;
 
