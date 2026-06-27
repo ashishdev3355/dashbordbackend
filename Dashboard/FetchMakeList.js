@@ -13,13 +13,26 @@ const FetchMakeList = async (req, res) => {
       });
     }
 
-    const query = `SELECT "name" FROM car_companies WHERE test=false AND segement=$1`;
-    const values = [segement];
+    // Parse segment: could be a JSON array string like '["car","bike","hcv"]' or a plain string like 'car'
+    let segments = [];
+    try {
+      const parsed = JSON.parse(segement);
+      if (Array.isArray(parsed)) {
+        segments = parsed;
+      } else {
+        segments = [parsed.toString()];
+      }
+    } catch (e) {
+      segments = [segement];
+    }
+
+    // Build safe SQL without parameterized placeholders (required due to PgBouncer/protocol constraints)
+    const safeParts = segments.map(s => `'${String(s).replace(/'/g, "''")}'`).join(', ');
+    const query = `SELECT "name" FROM car_companies WHERE test=false AND segement IN (${safeParts})`;
 
     console.log("query =", query);
-    console.log("values =", values);
 
-    const result = await client.query(query, values);
+    const result = await client.query(query);
 
     if (result.rows.length > 0) {
       return res.status(200).json({
@@ -40,3 +53,4 @@ const FetchMakeList = async (req, res) => {
 };
 
 module.exports = FetchMakeList;
+
