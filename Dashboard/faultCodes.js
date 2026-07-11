@@ -32,14 +32,14 @@ const safeBool = (value) => {
 };
 
 // Helper function to process rows in batches
-const processBatch = async (batch, companyId) => {
+const processBatch = async (batch) => {
   if (batch.length === 0) return { inserted: 0, skipped: 0 };
 
   try {
     // Create bulk insert query - Don't include ID, let it auto-generate
     const placeholders = batch.map((_, index) => {
       const offset = index * 7; // 7 values per row (including company_id)
-      return `(${offset + 1},${offset + 2},${offset + 3},${offset + 4},${offset + 5},${offset + 6},${offset + 7})`;
+      return `($${offset + 1},$${offset + 2},$${offset + 3},$${offset + 4},$${offset + 5},$${offset + 6},$${offset + 7})`;
     }).join(',');
 
     const query = `
@@ -54,7 +54,7 @@ const processBatch = async (batch, companyId) => {
     const values = batch.flatMap(row => {
       const genericValue = safeBool(row[6]);
       console.log(`Debug: row[6]="${row[6]}" -> safeBool=${genericValue} (type: ${typeof genericValue})`);
-      
+
       return [
         row[0] || null,  // dtc
         row[1] || null,  // title
@@ -62,7 +62,7 @@ const processBatch = async (batch, companyId) => {
         safeInt(row[3]), // repair_difficulty
         row[4] || null,  // make
         genericValue,    // generic (row[5] is company_id, row[6] is generic)
-        companyId        // company_id parameter
+        safeInt(row[5])  // company_id parameter (individual)
       ];
     });
 
@@ -72,14 +72,14 @@ const processBatch = async (batch, companyId) => {
   } catch (error) {
     console.error('Batch insert error:', error.message);
     // Fallback to individual inserts for this batch
-    return await processBatchIndividually(batch, companyId);
+    return await processBatchIndividually(batch);
   }
 };
 
 // Fallback function for individual processing if batch fails
-const processBatchIndividually = async (batch, companyId) => {
+const processBatchIndividually = async (batch) => {
   let inserted = 0, skipped = 0;
-  
+
   for (const [index, row] of batch.entries()) {
     try {
       if (!row[0]) { // Skip if DTC is missing (should be row[0], not row[1])
@@ -101,10 +101,10 @@ const processBatchIndividually = async (batch, companyId) => {
           safeInt(row[3]), // repair_difficulty
           row[4] || null,  // make
           safeBool(row[6]), // generic (row[5] is company_id)
-          companyId        // company_id parameter
+          safeInt(row[5])  // company_id parameter (individual)
         ]
       );
-      
+
       if (result.rowCount > 0) {
         inserted++;
         console.log(`✅ Inserted row ${index + 1}: DTC ${row[0]}`);
@@ -117,19 +117,28 @@ const processBatchIndividually = async (batch, companyId) => {
       skipped++;
     }
   }
-  
+
   return { inserted, skipped };
 };
 
 router.post('/', upload.single('file'), async (req, res) => {
   const startTime = Date.now();
-  
+
   try {
     const fileBuffer = req.file?.buffer;
-    
+
     if (!fileBuffer) return res.status(400).json({ message: 'No file uploaded' });
 
     console.log(`Processing file: ${req.file.originalname} (${fileBuffer.length} bytes)`);
+
+    // Fetch existing records from database for duplicate checking/logging
+    const existingResult = await pool.query('SELECT dtc, company_id FROM my_fault_codes');
+    const existingDbKeys = new Set();
+    existingResult.rows.forEach(r => {
+      if (r.dtc && r.company_id) {
+        existingDbKeys.add(`${String(r.dtc).trim()}|${r.company_id}`);
+      }
+    });
 
     // Start transaction
     await pool.query('BEGIN');
@@ -139,7 +148,7 @@ router.post('/', upload.single('file'), async (req, res) => {
     // Parse Excel from buffer
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(fileBuffer);
-    
+
     // Get first worksheet (since no sheet name provided)
     const worksheet = workbook.worksheets[0];
     if (!worksheet) {
@@ -151,46 +160,83 @@ router.post('/', upload.single('file'), async (req, res) => {
 
     // Optimized row processing - collect all valid rows first
     const validRows = [];
-    const processedDtcs = new Set();
+    const processedKeys = new Set();
+    const duplicateDetails = [];
     let headerSkipped = false;
-    let companyId = null; // Will be extracted from Excel data
-    
+    let companyId = null; // Will be extracted from Excel data for UI response
+    let totalExcelRowsParsed = 0;
+    let skippedRowsCount = 0;
+
     worksheet.eachRow({ includeEmpty: false }, (row, rowNumber) => {
+      totalExcelRowsParsed++;
       // Skip header row
       if (rowNumber === 1 && !headerSkipped) {
         headerSkipped = true;
         console.log(`📊 Header row: ${row.values.slice(1).join(' | ')}`);
         return;
       }
-      
+
       const rowData = row.values.slice(1); // Remove undefined first element
-      
+
       // Skip invalid rows - check for DTC (index 0, not 1)
       if (!rowData || rowData.length < 2 || !rowData[0]) {
-        console.log(`⚠️ Skipping row ${rowNumber}: Missing DTC or insufficient data`);
+        console.log(`⚠️ Skipping row ${rowNumber}: Missing DTC or insufficient data (Row length: ${rowData ? rowData.length : 0})`);
+        skippedRowsCount++;
         return;
       }
-      
+
       const dtc = String(rowData[0]).trim();
-      
-      // Skip duplicates within the file (based on DTC)
-      if (processedDtcs.has(dtc)) {
-        console.log(`🔄 Skipping duplicate DTC in file: ${dtc}`);
+      const rowCompanyId = safeInt(rowData[5]);
+
+      if (rowCompanyId === null) {
+        console.log(`⚠️ Skipping row ${rowNumber}: Missing or invalid company_id (DTC: "${dtc}", company_id in Excel: "${rowData[5]}")`);
+        skippedRowsCount++;
         return;
       }
-      
-      processedDtcs.add(dtc);
+
+      const duplicateKey = `${dtc}|${rowCompanyId}`;
+
+      // Check if it already exists in the database to log as a duplicate and skip in-memory
+      if (existingDbKeys.has(duplicateKey)) {
+        console.log(`⚠️ Skipping row ${rowNumber}: Duplicate DTC and Company ID already exists in database (DTC: "${dtc}", company_id: "${rowCompanyId}")`);
+        duplicateDetails.push({
+          rowNumber,
+          dtc,
+          companyId: rowCompanyId,
+          reason: 'Already exists in database'
+        });
+        skippedRowsCount++;
+        return;
+      }
+
+      // Skip duplicates within the file (based on DTC and company_id)
+      if (processedKeys.has(duplicateKey)) {
+        console.log(`🔄 Skipping row ${rowNumber}: Duplicate DTC and Company ID within Excel file (DTC: "${dtc}", company_id: "${rowCompanyId}")`);
+        duplicateDetails.push({
+          rowNumber,
+          dtc,
+          companyId: rowCompanyId,
+          reason: 'Duplicate in Excel file'
+        });
+        skippedRowsCount++;
+        return;
+      }
+
+      processedKeys.add(duplicateKey);
       validRows.push(rowData);
-      
-      // Set companyId from first valid row's data
-      if (companyId === null && rowData[5]) {
-        companyId = safeInt(rowData[5]);
+
+      // Log the row number, DTC, and company_id for every row before it is inserted
+      console.log(`📝 Row ${rowNumber}: DTC="${dtc}", company_id=${rowCompanyId}`);
+
+      // Set companyId (for stats / compatibility with UI response) from first valid row's data
+      if (companyId === null) {
+        companyId = rowCompanyId;
         console.log(`📍 Company ID extracted from Excel: ${companyId}`);
       }
-      
+
       // Log first few rows for debugging
       if (validRows.length <= 3) {
-        console.log(`📝 Row ${rowNumber} data:`, {
+        console.log(`📝 Row ${rowNumber} full data:`, {
           dtc: rowData[0],
           title: rowData[1],
           severity: rowData[2],
@@ -202,7 +248,12 @@ router.post('/', upload.single('file'), async (req, res) => {
       }
     });
 
-    console.log(`📈 Total valid rows to process: ${validRows.length}`);
+    console.log(`📊 --- Excel Parsing Diagnostics ---`);
+    console.log(`📊 Total rows parsed (including header): ${totalExcelRowsParsed}`);
+    console.log(`📊 Total data rows read (excluding header): ${totalExcelRowsParsed - 1}`);
+    console.log(`📊 Total valid rows gathered: ${validRows.length}`);
+    console.log(`📊 Total skipped rows: ${skippedRowsCount}`);
+    console.log(`📊 --------------------------------`);
 
     if (validRows.length === 0) {
       await pool.query('ROLLBACK');
@@ -215,6 +266,8 @@ router.post('/', upload.single('file'), async (req, res) => {
       return res.status(400).json({ message: 'No company ID found in Excel data' });
     }
 
+    console.log(`🚀 Sent ${validRows.length} rows to batch insertion.`);
+
     // Bulk insert with batching - only new entries will be inserted
     const BATCH_SIZE = 500; // Reduced batch size for better error handling
     let totalInserted = 0;
@@ -223,40 +276,44 @@ router.post('/', upload.single('file'), async (req, res) => {
     // Process in batches for optimal performance
     for (let i = 0; i < validRows.length; i += BATCH_SIZE) {
       const batch = validRows.slice(i, i + BATCH_SIZE);
-      const batchNumber = Math.floor(i/BATCH_SIZE) + 1;
-      
+      const batchNumber = Math.floor(i / BATCH_SIZE) + 1;
+
       console.log(`🔄 Processing batch ${batchNumber} (${batch.length} rows)...`);
-      
-      const batchResult = await processBatch(batch, companyId);
-      
+
+      const batchResult = await processBatch(batch);
+
       totalInserted += batchResult.inserted;
       totalSkipped += batchResult.skipped;
-      
+
       console.log(`✅ Batch ${batchNumber} completed: Inserted ${batchResult.inserted}, Skipped ${batchResult.skipped}`);
     }
 
     // Commit transaction
     await pool.query('COMMIT');
-    
+
     const endTime = Date.now();
     const processingTime = endTime - startTime;
-    
-    console.log(`🎉 Transaction committed in ${processingTime}ms`);
-    console.log(`📊 Final stats - Inserted: ${totalInserted}, Skipped: ${totalSkipped}`);
 
-    res.status(200).json({
+    console.log(`🎉 Transaction committed in ${processingTime}ms`);
+    console.log(`📊 Final DB execution stats:`);
+    console.log(`   - Total rows sent for insertion: ${validRows.length}`);
+    console.log(`   - Total rows successfully inserted into DB: ${totalInserted}`);
+    console.log(`   - Total rows skipped as DB-level duplicates (ON CONFLICT): ${totalSkipped}`);
+
+     res.status(200).json({
       message: `Excel imported with company_id: ${companyId} - Only new entries added`,
       stats: {
-        totalRowsProcessed: validRows.length,
+        totalRowsProcessed: totalExcelRowsParsed - 1,
         insertedCount: totalInserted,
-        skippedCount: totalSkipped,
+        skippedCount: skippedRowsCount,
         deletedCount: 0, // No deletions performed
         processingTimeMs: processingTime,
         rowsPerSecond: validRows.length > 0 ? Math.round((validRows.length / processingTime) * 1000) : 0,
         fileName: req.file.originalname,
         fileSize: fileBuffer.length,
         companyId: companyId,
-        worksheetName: worksheet.name
+        worksheetName: worksheet.name,
+        duplicateDetails: duplicateDetails
       }
     });
 
@@ -268,10 +325,10 @@ router.post('/', upload.single('file'), async (req, res) => {
     } catch (rollbackError) {
       console.error('❌ Error during rollback:', rollbackError);
     }
-    
+
     console.error('💥 Excel Import Error:', err);
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       message: 'Excel import failed',
       error: err.message,
       stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
