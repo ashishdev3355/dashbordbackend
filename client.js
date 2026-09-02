@@ -1,12 +1,11 @@
 const { Pool } = require('pg');
-const pool = new Pool(
-  {
-    connectionString: `postgresql://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@localhost:15432/${process.env.DB_NAME}`
 
-    // connectionString: `postgresql://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@13.202.193.4:15432/${process.env.DB_NAME}`
+const dbHost = process.env.DB_HOST && process.env.DB_HOST !== 'localhost' ? process.env.DB_HOST : '127.0.0.1';
+const dbPort = process.env.DB_PORT || '15432';
 
-
-  });
+const pool = new Pool({
+  connectionString: `postgresql://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@${dbHost}:${dbPort}/${process.env.DB_NAME}`
+});
 
 module.exports = {
   pool,

@@ -51,12 +51,19 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/api", authRoutes);
 app.use('/api', apiV1);
 
+const path = require('path');
+const { initProductTables } = require('./Dashboard/ProductModel.js');
+
+// Static uploads serving
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Health check endpoint
 app.get("/app/health", (req, res) => {
   res.send("app is healthy");
 });
 
 // Start server
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`app is running on port no ${port}`);
+  await initProductTables();
 });

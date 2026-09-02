@@ -76,6 +76,22 @@ router.get('/fetch_coverage', fetch_coverage);
 
 
 
+// Product Controller
+const productsController = require("./Dashboard/ProductsController.js");
+
+// Public Product APIs (for Website /shop)
+router.get('/products', productsController.getPublicProducts);
+router.get('/products/:idOrSlug', productsController.getPublicProductByIdOrSlug);
+
+// Admin Product APIs (Protected for Dashboard)
+router.get('/admin/products', requireAuth, productsController.getAdminProducts);
+router.get('/admin/products/:id', requireAuth, productsController.getAdminProductById);
+router.post('/admin/products', requireAuth, productsController.createProduct);
+router.put('/admin/products/:id', requireAuth, productsController.updateProduct);
+router.patch('/admin/products/:id/status', requireAuth, productsController.updateProductStatus);
+router.post('/admin/products/upload-image', requireAuth, productsController.handleImageUpload);
+router.delete('/admin/products/:id', requireAuth, productsController.deleteProduct);
+
 // Test route
 router.get('/test', (req, res) => {
   res.json({ message: 'Server is working' });
