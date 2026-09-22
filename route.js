@@ -92,6 +92,22 @@ router.patch('/admin/products/:id/status', requireAuth, productsController.updat
 router.post('/admin/products/upload-image', requireAuth, productsController.handleImageUpload);
 router.delete('/admin/products/:id', requireAuth, productsController.deleteProduct);
 
+// Blog Controller
+const blogController = require("./Dashboard/BlogController.js");
+
+// Public Blog APIs (for Website /blog & /blog/:slug)
+router.get('/blogs', blogController.getPublicBlogs);
+router.get('/blogs/:slug', blogController.getPublicBlogBySlug);
+
+// Admin Blog APIs (Protected for Dashboard)
+router.get('/admin/blogs', requireAuth, blogController.getAdminBlogs);
+router.get('/admin/blogs/:id', requireAuth, blogController.getAdminBlogById);
+router.post('/admin/blogs', requireAuth, blogController.createBlog);
+router.put('/admin/blogs/:id', requireAuth, blogController.updateBlog);
+router.patch('/admin/blogs/:id/publish', requireAuth, blogController.updateBlogPublishStatus);
+router.delete('/admin/blogs/:id', requireAuth, blogController.deleteBlog);
+router.post('/admin/blogs/upload-image', requireAuth, blogController.handleBlogImageUpload);
+
 // Test route
 router.get('/test', (req, res) => {
   res.json({ message: 'Server is working' });

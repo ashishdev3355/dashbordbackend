@@ -53,6 +53,7 @@ app.use('/api', apiV1);
 
 const path = require('path');
 const { initProductTables } = require('./Dashboard/ProductModel.js');
+const { initBlogTables } = require('./Dashboard/BlogModel.js');
 
 // Static uploads serving
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -66,4 +67,5 @@ app.get("/app/health", (req, res) => {
 app.listen(port, async () => {
   console.log(`app is running on port no ${port}`);
   await initProductTables();
+  await initBlogTables();
 });
