@@ -32,57 +32,6 @@ async function sendEmail(to, subject, text, html) {
 
 const router = express.Router();
 
-// ----------------- SIGNUP -----------------
-router.post("/signup", async (req, res) => {
-  const { email, password } = req.body;
-
-
-
-  
-  try {
-    if (!email || !password) {
-      return res.status(400).json({ error: "Email and password are required" });
-    }
-
-    // Check if user already exists
-    const existingUser = await pool.query(
-      "SELECT * FROM deshbord_users WHERE email = $1",
-      [email]
-    );
-
-    if (existingUser.rows.length > 0) {
-      return res.status(400).json({ error: "Email already registered" });
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Insert user
-    const result = await pool.query(
-      "INSERT INTO deshbord_users (email, password_hash, role_id) VALUES ($1, $2, '2') RETURNING id, email, role_id",
-      [email, hashedPassword]
-    );
-
-    const user = result.rows[0];
-
-    // Generate token
-    const token = jwt.sign(
-      { id: user.id, email: user.email, role_id: user.role_id },
-      process.env.JWT_SECRET,
-      { expiresIn: "7d" }
-    );
-
-    res.status(201).json({
-      message: "Signup successful",
-      user: { id: user.id, email: user.email, role_id: user.role_id },
-      token,
-    });
-  } catch (err) {
-    console.error("Signup error:", err);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
 // ----------------- LOGIN -----------------
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;

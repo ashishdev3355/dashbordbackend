@@ -53,7 +53,11 @@ const getUsers = async (req, res) => {
     const sanitizedUsers = result.rows.map(user => {
       const {
         token,
+        encrypted_password,
+        reset_password_token,
+        reset_password_sent_at,
         purchase_token,
+        latest_receipt,
         photo_url,
         user_type,
         id,
