@@ -50,6 +50,7 @@ router.use('/LiveDateCommandsUplode', LiveDateCommandsUplode);
 // Function Handlers (export functions directly)
 // -------------------------------
 const getActivationCodes = require("./Dashboard/ActivationCodes.js");
+const userVehicles = require("./Dashboard/UserVehicles.js");
 
 router.get('/users', requireAuth, rbacMiddleware, getUsers);
 router.get('/ScanDetail', requireAuth, rbacMiddleware, ScanDetail);
@@ -70,6 +71,8 @@ router.get('/FaultCodeCauses', requireAuth, rbacMiddleware, FaultCodeCauses);
 router.get('/FaultCodeSolutions', requireAuth, rbacMiddleware, FaultCodeSolutions);
 router.get('/FaultCodeSymptoms', requireAuth, rbacMiddleware, FaultCodeSymptoms);
 router.get('/activation-codes', requireAuth, rbacMiddleware, getActivationCodes);
+router.get('/admin/user-vehicles', requireAuth, rbacMiddleware, userVehicles.getUserVehicles);
+router.delete('/admin/user-vehicles/:id', requireAuth, rbacMiddleware, userVehicles.removeUserVehicle);
 router.get('/fetch_coverage', fetch_coverage);
 
 
